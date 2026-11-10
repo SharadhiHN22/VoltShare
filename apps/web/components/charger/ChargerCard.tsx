@@ -154,12 +154,25 @@ export default function ChargerCard({
               <span>Get Directions</span>
             </a>
           ) : (
-            <Link
-              href={`/chargers/${charger.id}`}
-              className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-brand-700 shadow-sm"
-            >
-              View Details
-            </Link>
+            <>
+              <Link
+                href={`/chargers/${charger.id}`}
+                className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-brand-700 shadow-sm flex items-center justify-center"
+              >
+                View Details
+              </Link>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${charger.latitude},${charger.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-emerald-700 inline-flex items-center justify-center gap-1.5 shadow-sm"
+                title="Get directions on Google Maps"
+              >
+                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Get Directions</span>
+              </a>
+            </>
           )}
 
           {showEditControls && !isExternalStation && (

@@ -20,6 +20,7 @@ import {
   Battery,
   BatteryCharging,
   Info,
+  Navigation,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -261,9 +262,23 @@ export default function ChargerDetailPage() {
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{charger.title}</h1>
 
-            <div className="flex items-start gap-2 text-sm text-slate-600">
-              <MapPin className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-              <span>{charger.address}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-slate-600">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                <span>{charger.address}</span>
+              </div>
+              {charger.latitude && charger.longitude && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${charger.latitude},${charger.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors w-fit flex-shrink-0 shadow-sm"
+                  title="Open navigation in Google Maps"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Get Directions</span>
+                </a>
+              )}
             </div>
 
             {/* Vehicle Compatibility Banner */}

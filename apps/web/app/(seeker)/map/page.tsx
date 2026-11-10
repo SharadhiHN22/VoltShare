@@ -30,6 +30,9 @@ export default function MapDiscoveryPage() {
   const [userVehicle, setUserVehicle] = useState<any | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [searchMode, setSearchMode] = useState<'GPS' | 'MANUAL'>('GPS');
+  const [searchLocationLabel, setSearchLocationLabel] = useState<string | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<any>({
@@ -70,10 +73,10 @@ export default function MapDiscoveryPage() {
     }
   };
 
-  // Re-fetch chargers when coordinates change
+  // Re-fetch chargers when coordinates or filters change
   useEffect(() => {
     fetchChargers();
-  }, [filters.latitude, filters.longitude]);
+  }, [filters.latitude, filters.longitude, filters.radius, filters.chargerType, filters.connectorType, filters.maxPrice, filters.minRating]);
 
   // Request browser geolocation
   const requestUserLocation = (isUserInitiated = false) => {
@@ -89,22 +92,28 @@ export default function MapDiscoveryPage() {
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         setUserLocation({ lat: latitude, lng: longitude, accuracy });
-        setLocationNotice(null);
         setIsLocating(false);
-        setFilters((prev: any) => ({
-          ...prev,
-          latitude,
-          longitude,
-        }));
+
+        // Only update search coordinates if the user didn't manually search for a specific location
+        if (isUserInitiated || searchMode !== 'MANUAL') {
+          setLocationNotice(null);
+          setFilters((prev: any) => ({
+            ...prev,
+            latitude,
+            longitude,
+          }));
+        }
       },
       (err) => {
         setIsLocating(false);
-        if (err.code === err.PERMISSION_DENIED) {
-          setLocationNotice('Location access was denied. You can search for chargers manually.');
-        } else if (err.code === err.TIMEOUT) {
-          setLocationNotice('Location request timed out. You can search for chargers manually.');
-        } else {
-          setLocationNotice('Unable to retrieve your location. You can search for chargers manually.');
+        if (isUserInitiated) {
+          if (err.code === err.PERMISSION_DENIED) {
+            setLocationNotice('Location access was denied. You can search for chargers manually.');
+          } else if (err.code === err.TIMEOUT) {
+            setLocationNotice('Location request timed out. You can search for chargers manually.');
+          } else {
+            setLocationNotice('Unable to retrieve your location. You can search for chargers manually.');
+          }
         }
       },
       {
@@ -134,15 +143,67 @@ export default function MapDiscoveryPage() {
     }
   }, []);
 
+  // Near Me: restores browser location search center
   const handleCenterSearch = () => {
+    setSearchMode('GPS');
+    setSearchLocationLabel(null);
+    setLocationNotice(null);
     if (userLocation) {
       setFilters((prev: any) => ({
         ...prev,
+        location: '',
         latitude: userLocation.lat,
         longitude: userLocation.lng,
       }));
     } else {
       requestUserLocation(true);
+    }
+  };
+
+  // Manual location search handler: geocodes query and centers search
+  const handleManualLocationSearch = async (query: string) => {
+    if (!query || !query.trim()) return;
+    setIsGeocoding(true);
+    setLocationNotice(null);
+
+    try {
+      let geo: { latitude: number; longitude: number; displayName: string } | null = null;
+      try {
+        const res = await chargerApi.geocode(query.trim());
+        if (res.data?.latitude && res.data?.longitude) {
+          geo = res.data;
+        }
+      } catch (apiErr) {
+        // Fallback directly to Nominatim
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&limit=1`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          geo = {
+            latitude: parseFloat(list[0].lat),
+            longitude: parseFloat(list[0].lon),
+            displayName: list[0].display_name,
+          };
+        }
+      }
+
+      if (!geo || !Number.isFinite(geo.latitude) || !Number.isFinite(geo.longitude)) {
+        setLocationNotice(`Location "${query}" not found. Please try another place.`);
+        return;
+      }
+
+      setSearchMode('MANUAL');
+      setSearchLocationLabel(geo.displayName || query);
+      setFilters((prev: any) => ({
+        ...prev,
+        location: query,
+        latitude: geo!.latitude,
+        longitude: geo!.longitude,
+      }));
+    } catch (err: any) {
+      setLocationNotice(`Unable to locate "${query}". ${err?.message || ''}`);
+    } finally {
+      setIsGeocoding(false);
     }
   };
 
@@ -156,13 +217,26 @@ export default function MapDiscoveryPage() {
             <div>
               <h1 className="text-lg font-bold text-slate-900">EV Stations Nearby</h1>
               <p className="text-xs text-slate-500">
-                Showing {chargers.length} {chargers.length === 1 ? 'station' : 'stations'} within {filters.radius || 15} km
+                {searchLocationLabel ? (
+                  <span>
+                    Near <strong className="text-emerald-700">{searchLocationLabel.split(',')[0]}</strong> &bull; {chargers.length} {chargers.length === 1 ? 'station' : 'stations'} within {filters.radius || 15} km
+                  </span>
+                ) : (
+                  <span>
+                    Showing {chargers.length} {chargers.length === 1 ? 'station' : 'stations'} within {filters.radius || 15} km
+                  </span>
+                )}
               </p>
             </div>
             <button
               onClick={handleCenterSearch}
               disabled={isLocating}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200 disabled:opacity-60"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border disabled:opacity-60 ${
+                searchMode === 'GPS'
+                  ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-300'
+              }`}
+              title="Switch back to current GPS location"
             >
               {isLocating ? (
                 <>
@@ -222,6 +296,8 @@ export default function MapDiscoveryPage() {
             filters={filters}
             onFilterChange={(newFilters: any) => setFilters(newFilters)}
             onSearch={fetchChargers}
+            onLocationSearch={handleManualLocationSearch}
+            isGeocoding={isGeocoding}
           />
         </div>
 
@@ -284,8 +360,8 @@ export default function MapDiscoveryPage() {
           selectedCharger={selectedCharger}
           onSelectCharger={(c) => setSelectedCharger(c)}
           center={{
-            lat: userLocation ? userLocation.lat : filters.latitude,
-            lng: userLocation ? userLocation.lng : filters.longitude,
+            lat: filters.latitude,
+            lng: filters.longitude,
           }}
           userLocation={userLocation}
           onCenterSearch={handleCenterSearch}

@@ -8,9 +8,11 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { authApi } from '@/lib/api';
 import { setStoredAuth } from '@/lib/auth';
+import { UserRole } from '@voltshare/shared';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [role, setRole] = useState<UserRole>(UserRole.SEEKER);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,14 +24,14 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await authApi.login({ email, password });
+      const res = await authApi.login({ email, password, role });
       if (res.data?.token) {
         setStoredAuth(res.data.token, res.data.user);
       }
       if (res.data?.user?.role === 'HOST') {
         router.push('/dashboard');
       } else {
-        router.push('/map');
+        router.push('/dashboard');
       }
     } catch (err: any) {
       setError(err?.message || 'Invalid email or password.');
@@ -47,6 +49,32 @@ export default function LoginPage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900">Welcome Back to VoltShare</h2>
           <p className="text-sm text-slate-600">Enter your credentials to access your account</p>
+        </div>
+
+        {/* Role Toggle Selector */}
+        <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setRole(UserRole.SEEKER)}
+            className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+              role === UserRole.SEEKER
+                ? 'bg-white text-slate-900 shadow-sm font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            ⚡ Driver / Seeker
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole(UserRole.HOST)}
+            className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+              role === UserRole.HOST
+                ? 'bg-white text-emerald-700 shadow-sm font-semibold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            🏠 Host
+          </button>
         </div>
 
         {error && (

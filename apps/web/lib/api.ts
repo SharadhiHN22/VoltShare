@@ -107,6 +107,14 @@ export const chargersApi = {
 
   listMine: () =>
     api.get<ApiResponse<Charger[]>>('/chargers/mine').then((r) => r.data),
+
+  geocode: (query: string) =>
+    api
+      .get<ApiResponse<{ latitude: number; longitude: number; displayName: string }>>(
+        '/chargers/geocode',
+        { params: { q: query } },
+      )
+      .then((r) => r.data),
 };
 
 // ── Bookings ──────────────────────────────────────────

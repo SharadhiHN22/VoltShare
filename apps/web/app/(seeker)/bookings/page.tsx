@@ -195,9 +195,7 @@ export default function BookingsPage() {
         const key =
           paymentData.keyId && paymentData.keyId.startsWith('rzp_') && paymentData.keyId !== 'your-razorpay-key-id'
             ? paymentData.keyId
-            : process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID && process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID.startsWith('rzp_')
-            ? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
-            : 'rzp_test_1DP5mmOlF5G5ag';
+            : process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
         const amountInPaise = Math.round(Number(paymentData.amount) * 100);
 
         const options: any = {

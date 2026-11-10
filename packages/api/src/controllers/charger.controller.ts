@@ -367,3 +367,49 @@ export const getMyChargers = async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 };
+
+/**
+ * Geocode a user-provided address or location query using Nominatim / OpenStreetMap.
+ */
+export const geocodeLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const query = req.query.q as string;
+    if (!query || !query.trim()) {
+      throw new AppError('Search query parameter "q" is required.', 400);
+    }
+
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&limit=1`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'VoltShare-EV-Charging-Platform/1.0 (voltshare@voltshare.internal)',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new AppError(`Geocoding service responded with status ${response.status}`, 502);
+    }
+
+    const results = (await response.json()) as Array<{
+      lat: string;
+      lon: string;
+      display_name: string;
+    }>;
+
+    if (!Array.isArray(results) || results.length === 0) {
+      throw new AppError(`Location "${query}" not found. Please try a different search term.`, 404);
+    }
+
+    const first = results[0];
+    res.json({
+      success: true,
+      data: {
+        latitude: parseFloat(first.lat),
+        longitude: parseFloat(first.lon),
+        displayName: first.display_name,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

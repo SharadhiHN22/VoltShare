@@ -7,6 +7,7 @@ import {
   updateCharger,
   toggleStatus,
   deleteCharger,
+  geocodeLocation,
 } from '../controllers/charger.controller';
 import { getChargerReviews } from '../controllers/review.controller';
 import { authenticate, authorize } from '../middleware/auth';
@@ -17,6 +18,9 @@ const router = Router();
 
 /** GET /api/chargers — Search chargers near a location (public) */
 router.get('/', validate(searchChargersSchema, 'query'), searchChargers);
+
+/** GET /api/chargers/geocode — Geocode address or city name (public) */
+router.get('/geocode', geocodeLocation);
 
 /** GET /api/chargers/mine — Get all chargers belonging to authenticated host */
 router.get('/mine', authenticate, authorize('HOST'), getMyChargers);

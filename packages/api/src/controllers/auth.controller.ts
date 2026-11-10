@@ -64,7 +64,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
  */
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -74,6 +74,17 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
       throw new AppError('Invalid email or password.', 401);
+    }
+
+    // Role mismatch validation: verify selected login role against stored account role
+    if (role && role !== user.role) {
+      if (user.role === 'SEEKER') {
+        throw new AppError('Incorrect account type. Please select Driver/Seeker.', 403);
+      } else if (user.role === 'HOST') {
+        throw new AppError('Incorrect account type. Please select Host.', 403);
+      } else {
+        throw new AppError(`Incorrect account type. This account is registered as ${user.role}.`, 403);
+      }
     }
 
     const token = jwt.sign(

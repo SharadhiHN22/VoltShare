@@ -53,6 +53,7 @@ export default function InteractiveMap({
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
   const prevUserLocationRef = useRef<string | null>(null);
+  const prevCenterRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Only run on client
@@ -172,6 +173,13 @@ export default function InteractiveMap({
       // Clear existing charger markers
       Object.values(markersRef.current).forEach((marker: any) => marker.remove());
       markersRef.current = {};
+
+      // Fly to new search center coordinates when center prop changes
+      const centerKey = `${center.lat.toFixed(6)},${center.lng.toFixed(6)}`;
+      if (prevCenterRef.current !== centerKey) {
+        prevCenterRef.current = centerKey;
+        map.flyTo([center.lat, center.lng], 13, { duration: 1.0 });
+      }
 
       // Add markers for all chargers
       chargers.forEach((charger) => {
@@ -293,9 +301,14 @@ export default function InteractiveMap({
                 ${charger.kwRating} kW • ${CONNECTOR_TYPE_LABELS[charger.connectorType] || charger.connectorType}
               </span>
             </div>
-            <a href="/chargers/${charger.id}" style="display: block; text-align: center; background: #059669; color: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-decoration: none;">
-              Book This Station →
-            </a>
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <a href="/chargers/${charger.id}" style="flex: 1; text-align: center; background: #059669; color: white; padding: 6px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; text-decoration: none;">
+                Book This Station →
+              </a>
+              <a href="https://www.google.com/maps/dir/?api=1&destination=${charger.latitude},${charger.longitude}" target="_blank" rel="noopener noreferrer" style="flex: 1; text-align: center; background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; padding: 6px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; text-decoration: none;">
+                Get Directions ↗
+              </a>
+            </div>
           </div>
         `;
 

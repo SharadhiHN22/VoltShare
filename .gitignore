@@ -14,10 +14,7 @@ apps/*/out/
 
 # Environment files - NEVER COMMIT REAL SECRETS
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 .env*.local
 *.env
 !.env.example

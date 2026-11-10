@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { ChargerType, ConnectorType } from '@voltshare/shared';
@@ -20,54 +20,97 @@ interface ChargerFiltersProps {
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
   onSearch: () => void;
+  onLocationSearch?: (locationQuery: string) => void;
+  isGeocoding?: boolean;
 }
 
 export default function ChargerFilters({
   filters,
   onFilterChange,
   onSearch,
+  onLocationSearch,
+  isGeocoding = false,
 }: ChargerFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [locationInput, setLocationInput] = useState(filters.location || '');
+
+  useEffect(() => {
+    setLocationInput(filters.location || '');
+  }, [filters.location]);
 
   const update = (key: keyof FilterState, value: string | number) => {
     onFilterChange({ ...filters, [key]: value });
   };
 
+  const handleLocationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onLocationSearch && locationInput.trim()) {
+      onLocationSearch(locationInput.trim());
+    } else {
+      onSearch();
+    }
+  };
+
   return (
     <div className="space-y-3">
+      {/* Manual Location Search Control */}
+      <form onSubmit={handleLocationSubmit} className="space-y-1">
+        <label className="block text-xs font-semibold text-gray-700">
+          Location
+        </label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Search Gubbi, Tumakuru..."
+              icon={Search}
+              value={locationInput}
+              onChange={(e) => {
+                setLocationInput(e.target.value);
+                update('location', e.target.value);
+              }}
+              className="text-sm"
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={isGeocoding || !locationInput.trim()}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 flex-shrink-0 font-medium h-[38px]"
+          >
+            {isGeocoding ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching
+              </span>
+            ) : (
+              'Search'
+            )}
+          </Button>
+        </div>
+      </form>
+
       {/* Header with collapse toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-1">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 text-left text-sm font-semibold text-gray-900 hover:text-emerald-700 transition-colors"
+          className="flex items-center gap-2 text-left text-xs font-semibold text-gray-700 hover:text-emerald-700 transition-colors"
         >
-          <SlidersHorizontal className="h-4 w-4 text-emerald-600" />
-          <span>Filters & Search Options</span>
+          <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Filters & Radius Options</span>
           {isOpen ? (
-            <ChevronUp className="h-4 w-4 text-gray-500" />
+            <ChevronUp className="h-3.5 w-3.5 text-gray-500" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
           )}
         </button>
 
         <Button
           size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5"
+          className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 border border-slate-300"
           onClick={onSearch}
         >
           Apply Filters
         </Button>
       </div>
-
-      {/* Primary search field (always visible for quick location search) */}
-      <Input
-        placeholder="Search city or neighborhood..."
-        icon={Search}
-        value={filters.location}
-        onChange={(e) => update('location', e.target.value)}
-        className="text-sm"
-      />
 
       {/* Collapsible advanced filters */}
       {isOpen && (
