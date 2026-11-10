@@ -1,0 +1,28 @@
+{
+  "name": "voltshare",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VoltShare — Peer-to-peer EV charging marketplace",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "api:dev": "npm --workspace=@voltshare/api run dev",
+    "api:build": "npm --workspace=@voltshare/api run build",
+    "api:start": "npm --workspace=@voltshare/api start",
+    "web:dev": "npm --workspace=@voltshare/web run dev",
+    "web:build": "npm --workspace=@voltshare/web run build",
+    "web:start": "npm --workspace=@voltshare/web start",
+    "db:generate": "npm --workspace=@voltshare/api run db:generate",
+    "db:push": "npm --workspace=@voltshare/api run db:push",
+    "db:migrate": "npm --workspace=@voltshare/api run db:migrate",
+    "db:studio": "npm --workspace=@voltshare/api run db:studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

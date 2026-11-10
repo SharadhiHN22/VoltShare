@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: voltshare-mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-voltshare_pass}
+      MYSQL_DATABASE: voltshare
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: voltshare-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:
