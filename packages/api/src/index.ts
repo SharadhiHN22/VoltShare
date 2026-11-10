@@ -11,7 +11,7 @@ import { config } from './config';
 
 const start = async () => {
   try {
-    app.listen(config.port, () => {
+    app.listen(config.port, '0.0.0.0', () => {
       console.log(`
   ⚡ VoltShare API Server
   ────────────────────────────

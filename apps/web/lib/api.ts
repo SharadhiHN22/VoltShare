@@ -27,8 +27,14 @@ import type {
   PaginatedResponse,
 } from '@voltshare/shared';
 
+const resolveBaseUrl = () => {
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+  const trimmed = rawUrl.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
+  baseURL: resolveBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -60,7 +66,7 @@ api.interceptors.response.use(
       }
     } else if (error.message) {
       if (error.message.includes('Network Error') || error.code === 'ERR_NETWORK') {
-        message = 'Cannot connect to backend server. Please verify the API is running on port 4000.';
+        message = 'Cannot connect to backend server. Please verify the API is running.';
       } else {
         message = error.message;
       }

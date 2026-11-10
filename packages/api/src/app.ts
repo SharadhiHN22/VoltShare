@@ -16,9 +16,28 @@ const app = express();
 app.use(helmet());
 
 // CORS
+const allowedOrigins = (config.corsOrigin || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps, curl, server-to-server, Render health checks)
+      if (!origin) return callback(null, true);
+      const normalizedOrigin = origin.trim().replace(/\/+$/, '');
+      const isAllowed = allowedOrigins.some((allowed) => {
+        if (allowed === '*' || allowed === normalizedOrigin) return true;
+        if (`https://${allowed}` === normalizedOrigin || `http://${allowed}` === normalizedOrigin) return true;
+        return false;
+      });
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   }),
 );

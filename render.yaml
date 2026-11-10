@@ -4,12 +4,14 @@ services:
     name: voltshare-api
     runtime: node
     plan: starter
-    buildCommand: npm install && npm --workspace=@voltshare/shared run build && npm --workspace=@voltshare/api run db:generate && npm --workspace=@voltshare/api run build
+    buildCommand: npm install && npm --workspace=@voltshare/shared run build && DATABASE_URL="${DATABASE_URL:-mysql://dummy:dummy@localhost:3306/voltshare}" npm --workspace=@voltshare/api run db:generate && npm --workspace=@voltshare/api run build
     startCommand: npm --workspace=@voltshare/api start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -20,7 +22,7 @@ services:
         fromService:
           type: web
           name: voltshare-web
-          property: host
+          property: url
       - key: OPEN_CHARGE_MAP_API_KEY
         sync: false
       - key: RAZORPAY_KEY_ID
@@ -40,8 +42,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20
       - key: NEXT_PUBLIC_API_URL
         fromService:
           type: web
           name: voltshare-api
-          property: host
+          property: url
