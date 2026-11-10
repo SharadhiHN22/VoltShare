@@ -453,8 +453,3 @@ This repository includes a production-ready [`render.yaml`](./render.yaml) Bluep
    - `voltshare-web`: Node.js web service running the Next.js production frontend.
 4. Set your production `DATABASE_URL` (e.g. AWS RDS MySQL or PlanetScale) and Razorpay credentials in the Render Dashboard.
 
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
